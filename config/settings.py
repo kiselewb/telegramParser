@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     SESSION_NAME: str = str(SESSIONS_DIR / "bot_session")
 
     ADMIN_PHONE: str
-    ADMIN_PASSWORD: str | None
-    ADMIN_ID: int
+    ADMIN_PASSWORD: str | None = ""
+    ADMIN_ID: list[int] = []
 
     PARSER_DATA: list[dict[str, str | list]] = [
         {

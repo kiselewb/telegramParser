@@ -5,6 +5,7 @@ from services.logger import Logger
 
 logger = Logger(__name__).setup_logger()
 
+
 class LimitManager:
     _instance: "LimitManager | None" = None
     _last_reset: datetime
@@ -24,7 +25,9 @@ class LimitManager:
         return cls._instance
 
     async def init(self):
-        logger.info(f"✅ LimitManager лимитов инициализирован. Текущее значение таймера: {self._last_reset.strftime('%H:%M:%S')}. Лимит: {self._limit_message} сообщений за {self._limit_waiting} сек.")
+        logger.info(
+            f"✅ LimitManager лимитов инициализирован. Текущее значение таймера: {self._last_reset.strftime('%H:%M:%S')}. Лимит: {self._limit_message} сообщений за {self._limit_waiting} сек."
+        )
         self._ready.set()
 
         while True:
@@ -32,14 +35,18 @@ class LimitManager:
             async with self._lock:
                 self._last_reset = datetime.now()
                 self._count_sent_message = 0
-            logger.info(f"🔄  Лимиты сброшены. Текущее значение таймера: {self._last_reset.strftime('%H:%M:%S')}.")
+            logger.info(
+                f"🔄  Лимиты сброшены. Текущее значение таймера: {self._last_reset.strftime('%H:%M:%S')}."
+            )
 
     async def wait_allow_sending_message(self) -> bool:
         async with self._lock:
             waiting_time = await self._check_count_limit()
 
         if waiting_time > 0:
-            logger.info(f"⏳ Достигнут лимит отправки сообщений. Ожидаем {waiting_time:.1f} сек...")
+            logger.info(
+                f"⏳ Достигнут лимит отправки сообщений. Ожидаем {waiting_time:.1f} сек..."
+            )
             await asyncio.sleep(waiting_time)
 
         await self._wait_for_sending()
@@ -48,7 +55,10 @@ class LimitManager:
 
     async def _check_count_limit(self) -> float:
         if self._count_sent_message >= self._limit_message:
-            waiting_time = self._limit_waiting - (datetime.now() - self._last_reset).total_seconds()
+            waiting_time = (
+                self._limit_waiting
+                - (datetime.now() - self._last_reset).total_seconds()
+            )
 
             if waiting_time > 0:
                 return waiting_time
@@ -57,13 +67,17 @@ class LimitManager:
             self._count_sent_message = 0
 
         self._count_sent_message += 1
-        logger.info(f"📊 Отправка сообщения доступна. Текущий счетчик: {self._count_sent_message}/{self._limit_message}")
+        logger.info(
+            f"📊 Отправка сообщения доступна. Текущий счетчик: {self._count_sent_message}/{self._limit_message}"
+        )
 
         return 0.0
 
     async def _wait_for_sending(self):
         if self._delay_sending > 0:
-            logger.info(f"⏱️ Задержка перед отправкой сообщения: {self._delay_sending} сек...")
+            logger.info(
+                f"⏱️ Задержка перед отправкой сообщения: {self._delay_sending} сек..."
+            )
             await asyncio.sleep(self._delay_sending)
 
     async def wait_ready(self):

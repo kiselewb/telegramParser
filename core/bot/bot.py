@@ -8,6 +8,7 @@ from services.logger import Logger
 
 logger = Logger(__name__).setup_logger()
 
+
 class TGBot:
     def __init__(self, bot_token: str):
         self.bot = Bot(

@@ -5,6 +5,7 @@ from services.logger import Logger
 
 logger = Logger(__name__).setup_logger()
 
+
 def init_seed_data(bind):
     session = Session(bind=bind)
 
@@ -13,7 +14,9 @@ def init_seed_data(bind):
             session.query(ParserData).count() > 0
             or session.query(ExcludeParserData).count() > 0
         ):
-            logger.info("Начальные данные уже загружены... Пропускаем начальный скрипт")
+            logger.info(
+                "🗓 Начальные данные уже загружены... Пропускаем начальный скрипт"
+            )
             return
 
         parser_data = [ParserData(**data) for data in settings.PARSER_DATA]

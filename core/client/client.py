@@ -1,22 +1,31 @@
 import asyncio
 from telethon import TelegramClient
+
+from config.paths import SESSIONS_DIR
 from core.client.handlers import ClientHandlers
 from config.settings import settings
 from services.logger import Logger
 
 logger = Logger(__name__).setup_logger()
 
+
 class TGClient:
     def __init__(self, session_name: str, api_id: int, api_hash: str):
+        SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
         self.client = TelegramClient(session_name, api_id, api_hash)
         self.config = settings
         self.handlers = ClientHandlers(self.client, self.config)
         self.is_running = False
 
+    def init(self):
+        SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+        print("ПАПКА ПАПКА ПАПКА ПАПКА")
+
     async def start(self):
         if not self.is_running:
             await self.client.start(
-                phone=self.config.ADMIN_PHONE, password=self.config.ADMIN_PASSWORD
+                phone=self.config.ADMIN_PHONE,
+                # password=self.config.ADMIN_PASSWORD
             )
             self.handlers.register()
             self.is_running = True

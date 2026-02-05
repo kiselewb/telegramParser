@@ -10,6 +10,7 @@ from services.parser_data_manager import ParserDataManager
 
 logger = Logger(__name__).setup_logger()
 
+
 class MessageManager:
     def __init__(self, client):
         self.client = client
@@ -18,14 +19,18 @@ class MessageManager:
         self.pdm = ParserDataManager()
         self.lm = LimitManager()
 
-    async def manage_group_message(self, message):
+    async def manage_group_message(self, event):
+        message = event.message
+
         await self._save_data_message(message)
 
         if await self._check_message(message):
-            logger.info(f"Пользователь {message.sender_id} уже получал сообщение со скриптом.")
+            logger.info(
+                f"❔ Пользователь {message.sender_id} уже получал сообщение со скриптом."
+            )
             return
 
-        await self._process_message(message)
+        await self._process_message(event, message)
 
     async def manage_private_message(self, message):
         await self._set_processed_message_is_replied(message)
@@ -45,7 +50,7 @@ class MessageManager:
 
         await self.db.save_data_message(data_message)
         logger.info(
-            f"Сообщение от пользователя с ID {data_message.get('sender_id')} сохранено. ID сообщения: {data_message.get('message_id')}"
+            f"✅  Сообщение от пользователя с ID {data_message.get('sender_id')} сохранено. ID сообщения: {data_message.get('message_id')}"
         )
 
     async def _check_message(self, message) -> bool:
@@ -54,12 +59,12 @@ class MessageManager:
             return True
         return False
 
-    async def _process_message(self, message):
+    async def _process_message(self, event, message):
         processed_message = await self._save_processed_message(message)
 
         await self.lm.wait_allow_sending_message()
 
-        await self._send_processed_message(processed_message)
+        await self._send_processed_message(event, processed_message)
         await self._set_processed_message_is_sent(processed_message)
 
     async def _save_processed_message(self, message):
@@ -73,19 +78,29 @@ class MessageManager:
         }
 
         processed_message = await self.db.save_processed_message(processed_message)
-        logger.info(f"Сообщение с ID {message.id} принято в обработку.")
+        logger.info(f"📌 Сообщение с ID {message.id} принято в обработку.")
 
         return processed_message
 
-    async def _send_processed_message(self, processed_message):
-        await self.client.send_message(processed_message.recipient_id, processed_message.template)
-        logger.info(
-            f"Скрипт: {processed_message.template[:50]}... Отправлен пользователю с ID {processed_message.recipient_id}"
-        )
+    async def _send_processed_message(self, event, processed_message):
+        recipient = await event.get_sender()
+        try:
+            await self.client.send_message(recipient, processed_message.template)
+            logger.info(
+                f"📩  Скрипт: {processed_message.template[:50]}... Отправлен пользователю с ID {processed_message.recipient_id}"
+            )
+
+        except Exception as e:
+            logger.error(
+                f"❌ Не удалось отправить скрипт пользователю {recipient}: {e}"
+            )
 
     async def _set_processed_message_is_sent(self, processed_message):
         await self.db.update_processed_message(
-            {"status": ProcessedMessageStatus.sent, "sent_at": datetime.now(timezone.utc)},
+            {
+                "status": ProcessedMessageStatus.sent,
+                "sent_at": datetime.now(timezone.utc),
+            },
             recipient_id=processed_message.recipient_id,
         )
 
@@ -94,7 +109,7 @@ class MessageManager:
             {"is_replied": True, "replied_at": datetime.now(timezone.utc)},
             recipient_id=message.sender_id,
         )
-        logger.info(f"Пользователь с ID {message.sender_id} ответил на скрипт.")
+        logger.info(f"📍 Пользователь с ID {message.sender_id} ответил на скрипт")
 
     def _get_keyword_data(
         self, message_text: str

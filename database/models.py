@@ -1,5 +1,15 @@
 from datetime import datetime
-from sqlalchemy import Text, Integer, String, DateTime, BigInteger, Boolean, func, ARRAY, Enum
+from sqlalchemy import (
+    Text,
+    Integer,
+    String,
+    DateTime,
+    BigInteger,
+    Boolean,
+    func,
+    ARRAY,
+    Enum,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from database.enums import ProcessedMessageStatus
@@ -35,7 +45,9 @@ class ProcessedMessage(Base):
         default=ProcessedMessageStatus.waiting,
         nullable=False,
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=True
+    )
     sent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     is_replied: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     replied_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)

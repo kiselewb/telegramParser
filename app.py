@@ -1,5 +1,4 @@
 import asyncio
-
 from services.logger import Logger
 from services.parser_data_manager import ParserDataManager
 from services.limit_manager import LimitManager
@@ -7,6 +6,7 @@ from core.bot.bot import TGBot
 from core.client.client import TGClient
 
 logger = Logger(__name__).setup_logger()
+
 
 class Application:
     def __init__(self, session_name: str, api_id: int, api_hash: str, bot_token: str):

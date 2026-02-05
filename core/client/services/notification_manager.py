@@ -3,6 +3,7 @@ from services.logger import Logger
 
 logger = Logger(__name__).setup_logger()
 
+
 class NotificationManager:
     def __init__(self, client):
         self.client = client
@@ -23,6 +24,13 @@ class NotificationManager:
             {"Ссылка: https://t.me/" + username if username else ""}
             """
 
-            await self.client.send_message(settings.ADMIN_ID, notification)
+            if settings.ADMIN_ID:
+                for admin_id in settings.ADMIN_ID:
+                    await self.client.send_message(admin_id, notification)
+                    logger.error("📨 Уведомление успешно отправлено администратору")
+            else:
+                logger.warning(
+                    "❌ Ошибка отправки уведомления администратору: в конфигурации не указан ни один администратор!"
+                )
         except Exception as e:
-            logger.error(f"Ошибка отправки уведомления администратору {e}")
+            logger.error(f"❌ Ошибка отправки уведомления администратору {e}")

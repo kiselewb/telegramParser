@@ -109,7 +109,7 @@ class ParserDataManager:
         return None
 
     async def _load_parser_data(self) -> None:
-        logger.info("Загружаю parser_data из БД")
+        logger.info("📥 Загружаю parser_data из БД")
         parser_data = await self.db.get_all_parser_data()
         self._parser_data = [
             {
@@ -122,7 +122,7 @@ class ParserDataManager:
         ]
 
     async def _load_include_keywords(self) -> None:
-        logger.info("Загружаю include_keywords из БД")
+        logger.info("📥 Загружаю include_keywords из БД")
         self._include_keywords = [
             keyword.lower()
             for data in self._parser_data
@@ -130,7 +130,7 @@ class ParserDataManager:
         ]
 
     async def _load_exclude_keywords(self) -> None:
-        logger.info("Загружаю exclude_keywords из БД")
+        logger.info("📥 Загружаю exclude_keywords из БД")
         exclude_data = await self.db.get_exclude_parser_data()
         self._exclude_keywords = exclude_data.keywords
 

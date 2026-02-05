@@ -6,8 +6,9 @@ from services.logger import Logger
 
 logger = Logger(__name__).setup_logger()
 
+
 class AdminMiddleware(BaseMiddleware):
-    def __init__(self, admin_id: int):
+    def __init__(self, admin_id: list[int]):
         self.admin_id = admin_id
         super().__init__()
 
@@ -17,7 +18,7 @@ class AdminMiddleware(BaseMiddleware):
         event: Message,
         data: dict[str, Any],
     ) -> Any:
-        if event.from_user.id != self.admin_id:
+        if event.from_user.id not in self.admin_id:
             logger.info(
                 f"⚠️ Попытка доступа от неавторизованного пользователя: {event.from_user.id}"
             )

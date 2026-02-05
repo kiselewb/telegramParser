@@ -20,7 +20,7 @@ class ClientHandlers:
             )
         )
         async def handle_group_message(event):
-            await self.mm.manage_group_message(event.message)
+            await self.mm.manage_group_message(event)
 
         @self.client.on(
             events.NewMessage(incoming=True, func=is_customer_first_message)
