@@ -1,4 +1,6 @@
 import asyncio
+
+from database.db_manager import DBManager
 from services.logger import Logger
 from services.parser_data_manager import ParserDataManager
 from services.limit_manager import LimitManager
@@ -10,14 +12,24 @@ logger = Logger(__name__).setup_logger()
 
 class Application:
     def __init__(self, session_name: str, api_id: int, api_hash: str, bot_token: str):
-        self.pdm = ParserDataManager()
+        self.db = DBManager()
+        self.pdm = ParserDataManager(self.db)
         self.lm = LimitManager()
+
         self.client = TGClient(
             session_name=session_name,
             api_id=api_id,
             api_hash=api_hash,
+            db=self.db,
+            pdm=self.pdm,
+            lm=self.lm,
         )
-        self.bot = TGBot(bot_token=bot_token)
+        self.bot = TGBot(
+            bot_token=bot_token,
+            db=self.db,
+            pdm=self.pdm,
+            lm=self.lm,
+        )
         self.tasks = []
 
     async def start(self):
@@ -31,8 +43,7 @@ class Application:
         client_task = asyncio.create_task(self.client.run(), name="TelegramClient")
         bot_task = asyncio.create_task(self.bot.run(), name="TelegramBot")
 
-        self.tasks = [lm_task, lm_task, client_task, bot_task]
-        self.tasks.append(bot_task)
+        self.tasks = [lm_task, client_task, bot_task]
 
         logger.info("✅ Все компоненты Приложения запущены")
 
@@ -45,6 +56,7 @@ class Application:
 
         await asyncio.gather(*self.tasks, return_exceptions=True)
 
+        await self.lm.stop()
         await self.client.stop()
         await self.bot.stop()
 

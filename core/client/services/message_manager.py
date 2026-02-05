@@ -1,23 +1,22 @@
 from datetime import datetime, timezone
 
-from core.client.utils import check_already_contacted
-from database.db_manager import DBManager
+from core.client.utils import Utils
 from core.client.services.notification_manager import NotificationManager
 from database.enums import ProcessedMessageStatus
-from services.limit_manager import LimitManager
 from services.logger import Logger
-from services.parser_data_manager import ParserDataManager
 
 logger = Logger(__name__).setup_logger()
 
 
 class MessageManager:
-    def __init__(self, client):
+    def __init__(self, client, db, pdm, lm):
         self.client = client
-        self.db = DBManager()
-        self.nm = NotificationManager(self.client)
-        self.pdm = ParserDataManager()
-        self.lm = LimitManager()
+        self.db = db
+        self.pdm = pdm
+        self.lm = lm
+        self.nm = NotificationManager(client)
+        self.utils = Utils(db, pdm)
+
 
     async def manage_group_message(self, event):
         message = event.message
@@ -54,7 +53,7 @@ class MessageManager:
         )
 
     async def _check_message(self, message) -> bool:
-        is_contacted = await check_already_contacted(message.sender_id)
+        is_contacted = await self.utils.check_already_contacted(message.sender_id)
         if is_contacted:
             return True
         return False

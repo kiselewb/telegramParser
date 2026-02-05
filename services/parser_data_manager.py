@@ -5,19 +5,11 @@ logger = Logger(__name__).setup_logger()
 
 
 class ParserDataManager:
-    _instance: "ParserDataManager | None" = None
-    _parser_data: list
-    _include_keywords: list
-    _exclude_keywords: list
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.db = DBManager()
-            cls._instance._parser_data = []
-            cls._instance._include_keywords = []
-            cls._instance._exclude_keywords = []
-        return cls._instance
+    def __init__(self, db: DBManager | None = None):
+        self.db = db
+        self._parser_data = []
+        self._include_keywords = []
+        self._exclude_keywords = []
 
     async def init(self) -> None:
         try:
@@ -135,8 +127,17 @@ class ParserDataManager:
         self._exclude_keywords = exclude_data.keywords
 
     async def update_all_data(self) -> None:
-        self._parser_data = []
-        self._include_keywords = []
-        self._exclude_keywords = []
+        try:
+            self._parser_data.clear()
+            self._include_keywords.clear()
+            self._exclude_keywords.clear()
 
-        await self.init()
+            await self._load_parser_data()
+            await self._load_include_keywords()
+            await self._load_exclude_keywords()
+
+            logger.info("✅ ParserDataManager обновлен")
+
+        except Exception as e:
+            logger.error(f"❌ Ошибка обновления ParserDataManager {e}")
+            raise

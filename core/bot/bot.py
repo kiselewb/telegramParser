@@ -4,13 +4,16 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from core.bot.handlers.handlers import BotHandlers
 from core.bot.middlewares.middlewares import BotMiddlewares
+from database.db_manager import DBManager
+from services.limit_manager import LimitManager
 from services.logger import Logger
+from services.parser_data_manager import ParserDataManager
 
 logger = Logger(__name__).setup_logger()
 
 
 class TGBot:
-    def __init__(self, bot_token: str):
+    def __init__(self, bot_token: str, db: DBManager, pdm: ParserDataManager, lm: LimitManager):
         self.bot = Bot(
             token=bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
         )

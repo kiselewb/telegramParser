@@ -4,22 +4,21 @@ from telethon import TelegramClient
 from config.paths import SESSIONS_DIR
 from core.client.handlers import ClientHandlers
 from config.settings import settings
+from database.db_manager import DBManager
+from services.limit_manager import LimitManager
 from services.logger import Logger
+from services.parser_data_manager import ParserDataManager
 
 logger = Logger(__name__).setup_logger()
 
 
 class TGClient:
-    def __init__(self, session_name: str, api_id: int, api_hash: str):
+    def __init__(self, session_name: str, api_id: int, api_hash: str, db: DBManager, pdm: ParserDataManager, lm: LimitManager):
         SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
-        self.client = TelegramClient(session_name, api_id, api_hash)
         self.config = settings
-        self.handlers = ClientHandlers(self.client, self.config)
         self.is_running = False
-
-    def init(self):
-        SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
-        print("ПАПКА ПАПКА ПАПКА ПАПКА")
+        self.client = TelegramClient(session_name, api_id, api_hash)
+        self.handlers = ClientHandlers(self.client, db, pdm, lm, self.config)
 
     async def start(self):
         if not self.is_running:

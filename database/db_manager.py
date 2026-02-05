@@ -7,18 +7,16 @@ from database.models import Message, ProcessedMessage, ParserData, ExcludeParser
 
 
 class DBManager:
-    _instance: "DBManager | None" = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.engine = create_async_engine(
-                settings.DATABASE_URL, echo=False
-            )
-            cls._instance.async_session = async_sessionmaker(
-                cls._instance.engine, expire_on_commit=False
-            )
-        return cls._instance
+    def __init__(self):
+        self.engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=False,
+            pool_size=10,
+            max_overflow=20,
+            pool_pre_ping=True,
+            pool_recycle=3600
+        )
+        self.async_session = async_sessionmaker(self.engine, expire_on_commit=False)
 
     async def save_data_message(self, data: dict):
         async with self.async_session() as session:

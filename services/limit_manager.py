@@ -26,22 +26,28 @@ class LimitManager:
 
     async def init(self):
         logger.info(
-            f"✅ LimitManager лимитов инициализирован. Текущее значение таймера: {self._last_reset.strftime('%H:%M:%S')}. Лимит: {self._limit_message} сообщений за {self._limit_waiting} сек."
+            f"✅ LimitManager лимитов инициализирован. Текущее значение таймера: {self._last_reset.strftime('%H:%M:%S')}."
+            f"Лимит: {self._limit_message} сообщений за {self._limit_waiting} сек."
         )
         self._ready.set()
 
-        while True:
-            await asyncio.sleep(self._limit_waiting)
-            async with self._lock:
+        try:
+            while True:
+                await asyncio.sleep(self._limit_waiting)
+
                 self._last_reset = datetime.now()
                 self._count_sent_message = 0
-            logger.info(
-                f"🔄  Лимиты сброшены. Текущее значение таймера: {self._last_reset.strftime('%H:%M:%S')}."
-            )
+
+                logger.info(
+                    f"🔄  Лимиты сброшены. Текущее значение таймера: {self._last_reset.strftime('%H:%M:%S')}."
+                )
+        except asyncio.CancelledError:
+            logger.info("🛑 LimitManager остановлен")
+            raise
 
     async def wait_allow_sending_message(self) -> bool:
         async with self._lock:
-            waiting_time = await self._check_count_limit()
+            waiting_time = self._check_count_limit()
 
         if waiting_time > 0:
             logger.info(
@@ -53,7 +59,7 @@ class LimitManager:
         logger.info("✉️ Сообщение готово к отправке!")
         return True
 
-    async def _check_count_limit(self) -> float:
+    def _check_count_limit(self) -> float:
         if self._count_sent_message >= self._limit_message:
             waiting_time = (
                 self._limit_waiting
@@ -82,3 +88,7 @@ class LimitManager:
 
     async def wait_ready(self):
         await self._ready.wait()
+
+    async def stop(self):
+        logger.info("🛑 Останавливаю LimitManager...")
+        self._ready.clear()
