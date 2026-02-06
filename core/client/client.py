@@ -45,6 +45,7 @@ class TGClient:
 
         except asyncio.exceptions.CancelledError:
             logger.info("⚠️  Получен сигнал остановки Клиента")
+            raise
 
         except Exception as e:
             logger.error(f"❌  Критическая ошибка Клиента: {e}")

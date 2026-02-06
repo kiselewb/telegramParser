@@ -45,6 +45,7 @@ class TGBot:
 
         except asyncio.exceptions.CancelledError:
             logger.info("\n⚠️  Получен сигнал остановки Бота")
+            raise
 
         except Exception as e:
             logger.error(f"❌  Критическая ошибка Бота: {e}")

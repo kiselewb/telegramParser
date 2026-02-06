@@ -50,22 +50,22 @@ class Application:
     async def stop(self):
         logger.info("🛑  Остановка Приложения...")
 
+        await self.lm.stop()
+        await self.client.stop()
+        await self.bot.stop()
+
         for task in self.tasks:
             if not task.done():
                 task.cancel()
 
         await asyncio.gather(*self.tasks, return_exceptions=True)
 
-        await self.lm.stop()
-        await self.client.stop()
-        await self.bot.stop()
-
         logger.info("✅ Приложение остановлено")
 
     async def run(self):
         try:
             await self.start()
-            await asyncio.gather(*self.tasks)
+            await asyncio.gather(*self.tasks, return_exceptions=True)
 
         except asyncio.exceptions.CancelledError:
             logger.info("⚠️ Получен сигнал остановки Приложения")
