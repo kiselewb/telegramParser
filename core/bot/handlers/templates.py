@@ -11,9 +11,11 @@ from aiogram.types import (
 from core.bot.services.keyboards import back_menu_button, cancel_button
 from core.bot.states.templates import TemplateFSM
 from services.parser_data_manager import ParserDataManager
+from database.db_manager import DBManager
+
 
 router = Router()
-pdm = ParserDataManager()
+pdm = ParserDataManager(DBManager())
 
 
 @router.callback_query(F.data == "edit_templates")

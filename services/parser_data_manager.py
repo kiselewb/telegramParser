@@ -5,11 +5,17 @@ logger = Logger(__name__).setup_logger()
 
 
 class ParserDataManager:
-    def __init__(self, db: DBManager | None = None):
-        self.db = db
-        self._parser_data = []
-        self._include_keywords = []
-        self._exclude_keywords = []
+    _instance: "ParserDataManager | None" = None
+
+    def __new__(cls, db: DBManager):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.db = db
+            cls._instance._parser_data = []
+            cls._instance._include_keywords = []
+            cls._instance._exclude_keywords = []
+
+        return cls._instance
 
     async def init(self) -> None:
         try:

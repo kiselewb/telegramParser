@@ -14,10 +14,11 @@ from core.bot.services.keyboards import (
     build_delete_keyboard,
 )
 from core.bot.states.exclude_keywords import ExcludeKeywordsFSM
+from database.db_manager import DBManager
 from services.parser_data_manager import ParserDataManager
 
 router = Router()
-pdm = ParserDataManager()
+pdm = ParserDataManager(DBManager())
 
 
 @router.callback_query(F.data == "edit_exclude_keywords")
