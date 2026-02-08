@@ -21,6 +21,7 @@ class TGBot:
         self.middlewares = BotMiddlewares(self.dp)
         self.handlers = BotHandlers(self.dp)
         self.is_running = False
+        self._polling_task = None
 
     async def start(self):
         if not self.is_running:
@@ -33,7 +34,18 @@ class TGBot:
     async def stop(self):
         if self.is_running:
             logger.info("🔄 Остановка Бота...")
+
+            if self._polling_task and not self._polling_task.done():
+                self._polling_task.cancel()
+                try:
+                    await self._polling_task
+                except asyncio.CancelledError:
+                    pass
+
+            await self.dp.stop_polling()
+
             await self.bot.session.close()
+
             self.is_running = False
             logger.info("✅ Бот остановлен корректно")
 
@@ -41,9 +53,13 @@ class TGBot:
         try:
             await self.start()
             logger.info("🤖 Бот работает. Нажмите Ctrl+C для остановки")
-            await self.dp.start_polling(self.bot)
 
-        except asyncio.exceptions.CancelledError:
+            self._polling_task = asyncio.create_task(
+                self.dp.start_polling(self.bot)
+            )
+            await self._polling_task
+
+        except asyncio.CancelledError:
             logger.info("⚠️ Получен сигнал остановки Бота")
             raise
 

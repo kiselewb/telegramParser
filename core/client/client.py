@@ -19,6 +19,7 @@ class TGClient:
         self.is_running = False
         self.client = TelegramClient(session_name, api_id, api_hash)
         self.handlers = ClientHandlers(self.client, db, pdm, lm, self.config)
+        self._disconnect_task = None
 
     async def start(self):
         if not self.is_running:
@@ -32,23 +33,36 @@ class TGClient:
 
     async def stop(self):
         if self.is_running:
-            logger.info("🔄  Остановка Клиент...")
+            logger.info("🔄 Остановка Клиента...")
+
+            if self._disconnect_task and not self._disconnect_task.done():
+                self._disconnect_task.cancel()
+                try:
+                    await self._disconnect_task
+                except asyncio.CancelledError:
+                    pass
+
             await self.client.disconnect()
+
             self.is_running = False
             logger.info("✅ Соединение Клиента закрыто корректно")
 
     async def run(self):
         try:
             await self.start()
-            logger.info("🤖  Клиента работает. Нажмите Ctrl+C для остановки")
-            await self.client.run_until_disconnected()
+            logger.info("🤖 Клиент работает. Нажмите Ctrl+C для остановки")
 
-        except asyncio.exceptions.CancelledError:
-            logger.info("⚠️  Получен сигнал остановки Клиента")
+            self._disconnect_task = asyncio.create_task(
+                self.client.run_until_disconnected()
+            )
+            await self._disconnect_task
+
+        except asyncio.CancelledError:
+            logger.info("⚠️ Получен сигнал остановки Клиента")
             raise
 
         except Exception as e:
-            logger.error(f"❌  Критическая ошибка Клиента: {e}")
+            logger.error(f"❌ Критическая ошибка Клиента: {e}")
             raise
 
         finally:

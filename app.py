@@ -48,9 +48,12 @@ class Application:
         logger.info("✅ Все компоненты Приложения запущены")
 
     async def stop(self):
-        logger.info("🛑  Остановка Приложения...")
+        logger.info("🛑 Остановка Приложения...")
 
         await self.lm.stop()
+
+        await asyncio.sleep(0.5)
+
         await self.client.stop()
         await self.bot.stop()
 
@@ -65,13 +68,16 @@ class Application:
     async def run(self):
         try:
             await self.start()
+
             await asyncio.gather(*self.tasks, return_exceptions=True)
 
-        except asyncio.exceptions.CancelledError:
+        except asyncio.CancelledError:
             logger.info("⚠️ Получен сигнал остановки Приложения")
+            raise
 
         except Exception as e:
             logger.error(f"❌ Критическая ошибка Приложения: {e}")
+            raise
 
         finally:
             await self.stop()
