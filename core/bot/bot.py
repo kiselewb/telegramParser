@@ -32,7 +32,7 @@ class TGBot:
 
     async def stop(self):
         if self.is_running:
-            logger.info("🔄  Остановка Бота...")
+            logger.info("🔄 Остановка Бота...")
             await self.bot.session.close()
             self.is_running = False
             logger.info("✅ Бот остановлен корректно")
@@ -40,15 +40,15 @@ class TGBot:
     async def run(self):
         try:
             await self.start()
-            logger.info("🤖  Бот работает. Нажмите Ctrl+C для остановки")
+            logger.info("🤖 Бот работает. Нажмите Ctrl+C для остановки")
             await self.dp.start_polling(self.bot)
 
         except asyncio.exceptions.CancelledError:
-            logger.info("\n⚠️  Получен сигнал остановки Бота")
+            logger.info("⚠️ Получен сигнал остановки Бота")
             raise
 
         except Exception as e:
-            logger.error(f"❌  Критическая ошибка Бота: {e}")
+            logger.error(f"❌ Критическая ошибка Бота: {e}")
             raise
 
         finally:
