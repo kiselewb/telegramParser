@@ -55,31 +55,41 @@ class Application:
 
         logger.info("🛑 Остановка Приложения...")
 
-        await self.lm.stop()
-
-        await asyncio.sleep(0.5)
-
-        try:
-            await self.client.stop()
-        except Exception as e:
-            logger.warning(f"Ошибка при остановке клиента: {e}")
-
-        try:
-            await self.bot.stop()
-        except Exception as e:
-            logger.warning(f"Ошибка при остановке бота: {e}")
-
         for task in self.tasks:
             if not task.done():
                 task.cancel()
 
-        results = await asyncio.gather(*self.tasks, return_exceptions=True)
+        stop_tasks = []
 
-        for i, result in enumerate(results):
-            if isinstance(result, Exception) and not isinstance(result, asyncio.CancelledError):
-                logger.warning(f"Задача {self.tasks[i].get_name()} завершилась с ошибкой: {result}")
+        stop_tasks.append(asyncio.create_task(self._safe_stop(self.lm.stop(), "LimitManager")))
+        stop_tasks.append(asyncio.create_task(self._safe_stop(self.client.stop(), "Client")))
+        stop_tasks.append(asyncio.create_task(self._safe_stop(self.bot.stop(), "Bot")))
+
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*stop_tasks, return_exceptions=True),
+                timeout=5.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning("⚠️ Таймаут при остановке компонентов")
+
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*self.tasks, return_exceptions=True),
+                timeout=3.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning("⚠️ Таймаут при завершении задач")
 
         logger.info("✅ Приложение остановлено")
+
+    async def _safe_stop(self, coro, name):
+        try:
+            await coro
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            logger.warning(f"⚠️ Ошибка при остановке {name}: {e}")
 
     async def run(self):
         try:
