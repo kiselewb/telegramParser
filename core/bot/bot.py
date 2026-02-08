@@ -42,9 +42,10 @@ class TGBot:
                 except asyncio.CancelledError:
                     pass
 
-            await self.dp.stop_polling()
-
-            await self.bot.session.close()
+            try:
+                await self.bot.session.close()
+            except Exception as e:
+                logger.warning(f"Ошибка при закрытии сессии бота: {e}")
 
             self.is_running = False
             logger.info("✅ Бот остановлен корректно")

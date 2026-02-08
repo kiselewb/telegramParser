@@ -13,7 +13,8 @@ logger = Logger(__name__).setup_logger()
 
 
 class TGClient:
-    def __init__(self, session_name: str, api_id: int, api_hash: str, db: DBManager, pdm: ParserDataManager, lm: LimitManager):
+    def __init__(self, session_name: str, api_id: int, api_hash: str, db: DBManager, pdm: ParserDataManager,
+                 lm: LimitManager):
         SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
         self.config = settings
         self.is_running = False
@@ -42,7 +43,11 @@ class TGClient:
                 except asyncio.CancelledError:
                     pass
 
-            await self.client.disconnect()
+            try:
+                if self.client.is_connected():
+                    await self.client.disconnect()
+            except Exception as e:
+                logger.warning(f"Ошибка при отключении клиента: {e}")
 
             self.is_running = False
             logger.info("✅ Соединение Клиента закрыто корректно")

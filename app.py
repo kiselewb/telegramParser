@@ -31,6 +31,7 @@ class Application:
             lm=self.lm,
         )
         self.tasks = []
+        self._stop_called = False
 
     async def start(self):
         logger.info("🚀 Запуск Приложения...")
@@ -48,20 +49,35 @@ class Application:
         logger.info("✅ Все компоненты Приложения запущены")
 
     async def stop(self):
+        if self._stop_called:
+            return
+        self._stop_called = True
+
         logger.info("🛑 Остановка Приложения...")
 
         await self.lm.stop()
 
         await asyncio.sleep(0.5)
 
-        await self.client.stop()
-        await self.bot.stop()
+        try:
+            await self.client.stop()
+        except Exception as e:
+            logger.warning(f"Ошибка при остановке клиента: {e}")
+
+        try:
+            await self.bot.stop()
+        except Exception as e:
+            logger.warning(f"Ошибка при остановке бота: {e}")
 
         for task in self.tasks:
             if not task.done():
                 task.cancel()
 
-        await asyncio.gather(*self.tasks, return_exceptions=True)
+        results = await asyncio.gather(*self.tasks, return_exceptions=True)
+
+        for i, result in enumerate(results):
+            if isinstance(result, Exception) and not isinstance(result, asyncio.CancelledError):
+                logger.warning(f"Задача {self.tasks[i].get_name()} завершилась с ошибкой: {result}")
 
         logger.info("✅ Приложение остановлено")
 
